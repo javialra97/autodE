@@ -7,6 +7,7 @@ from autode.wrappers.keywords.keywords import (
     HessianKeywords,
     GradientKeywords,
     SinglePointKeywords,
+    IRCKeywords,
     BasisSet,
     DispersionCorrection,
     Functional,
@@ -15,6 +16,7 @@ from autode.wrappers.keywords.keywords import (
     WFMethod,
     ECP,
     MaxOptCycles,
+    MaxIRCPoints,
 )
 from autode.wrappers.keywords.basis_sets import (
     def2svp,
@@ -63,4 +65,5 @@ __all__ = [
     "WFMethod",
     "ECP",
     "MaxOptCycles",
+    "MaxIRCPoints",
 ]

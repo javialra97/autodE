@@ -23,6 +23,7 @@ from autode.wrappers.keywords import (
     SinglePointKeywords,
     Keywords,
     GradientKeywords,
+    IRCKeywords,
 )
 from autode.utils import temporary_config
 
@@ -48,6 +49,7 @@ __all__ = [
     "HessianKeywords",
     "SinglePointKeywords",
     "GradientKeywords",
+    "IRCKeywords",
     "Reaction",
     "MultiStepReaction",
     "Atom",

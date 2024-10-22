@@ -392,3 +392,41 @@ class TransitionState(TSbase):
             (autode.transition_states.transition_state.TransitionState): TS
         """
         return cls(ts_guess=TSguess.from_species(species), bond_rearr=None)
+
+    def _run_irc(self, method: "Method", name_ext: str) -> None:
+        """Run an irc calculation"""
+        assert method.keywords.irc is not None, "Must have IRC keywords"
+        irc_calc = Calculation(
+            name=f"{self.name}_{name_ext}",
+            molecule=self,
+            method=method,
+            n_cores=Config.n_cores,
+            keywords=method.keywords.irc,
+        )
+        try:
+            irc_calc.run()
+
+        except CalculationException:
+            logger.error("IRC calculation failed")
+
+        return None
+
+    def irc(
+        self,
+        name_ext: str = "irc",
+        method: Optional["Method"] = None,
+        reset_graph: bool = False,
+        calc: Optional[Calculation] = None,
+        keywords: Optional["Keywords"] = None,
+    ):
+        """Compute IRC profile of a TS"""
+        logger.info(f"IRC calculation of a transition state")
+
+        self._run_irc(method=get_hmethod(), name_ext=name_ext)
+
+        # Set the new properties of this TS from a successful reopt
+        # self.atoms = disp_ts.atoms
+        # self.energy = disp_ts.energy
+        # self._hess = disp_ts.hessian
+
+        return None

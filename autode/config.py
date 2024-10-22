@@ -2,7 +2,7 @@ import os
 from typing import Any
 from autode.values import Frequency, Distance, Allocation
 from autode.wrappers.keywords import implicit_solvent_types as solv
-from autode.wrappers.keywords import KeywordsSet, MaxOptCycles
+from autode.wrappers.keywords import KeywordsSet, MaxOptCycles, MaxIRCPoints
 from autode.wrappers.keywords.basis_sets import (
     def2svp,
     def2tzvp,
@@ -268,6 +268,7 @@ class _ConfigClass:
             opt_ts=[pbe0, def2svp, "Freq", d3bj, grid, optts_block],
             hess=[pbe0, def2svp, "Freq", d3bj, grid],
             sp=[pbe0, def2tzvp, d3bj, grid],
+            irc=[pbe0, def2svp, "IRC=calcfc", MaxIRCPoints(15), d3bj, grid],
             ecp=def2tzecp,
         )
 
@@ -295,6 +296,7 @@ class _ConfigClass:
             opt_ts=[pbe0, def2svp, "Freq", d3bj, ts_str],
             hess=[pbe0, def2svp, "Freq", d3bj],
             sp=[pbe0, def2tzvp, d3bj],
+            irc=[pbe0, def2svp, "IRC=calcfc", MaxIRCPoints(15), d3bj],
             ecp=def2tzecp,
         )
 

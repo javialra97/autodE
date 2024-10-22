@@ -16,6 +16,7 @@ class KeywordsSet:
         opt_ts: Optional["_KEYWORDS_TYPE"] = None,
         hess: Optional["_KEYWORDS_TYPE"] = None,
         sp: Optional["_KEYWORDS_TYPE"] = None,
+        irc: Optional["_KEYWORDS_TYPE"] = None,
         ecp: Optional["ECP"] = None,
     ):
         """
@@ -52,6 +53,8 @@ class KeywordsSet:
 
             sp: List of keywords for a single point calculation
 
+            irc: List of keywords for an intrinsic reaction coordinate calculation
+
             ecp: Effective core potential to use for atoms heavier than
                  ecp.min_atomic_number, if not None
 
@@ -67,6 +70,8 @@ class KeywordsSet:
 
         self._low_sp: SinglePointKeywords = SinglePointKeywords(low_sp)
         self._sp: SinglePointKeywords = SinglePointKeywords(sp)
+
+        self._irc: IRCKeywords = IRCKeywords(irc)
 
         if ecp is not None:
             self.set_ecp(ecp)
@@ -142,6 +147,14 @@ class KeywordsSet:
         self._sp = SinglePointKeywords(value)
 
     @property
+    def irc(self) -> "IRCKeywords":
+        return self._irc
+
+    @sp.setter
+    def irc(self, value: Optional[Sequence[str]]):
+        self._irc = IRCKeywords(value)
+
+    @property
     def _list(self) -> List["Keywords"]:
         """List of all the keywords in this set"""
         return [
@@ -152,18 +165,19 @@ class KeywordsSet:
             self._hess,
             self._sp,
             self._low_sp,
+            self._irc,
         ]
 
     def set_opt_functional(self, functional: Union["Functional", str]):
         """Set the functional for all optimisation and gradient calculations"""
-        for attr in ("low_opt", "opt", "opt_ts", "grad", "hess"):
+        for attr in ("low_opt", "opt", "opt_ts", "grad", "hess", "irc"):
             getattr(self, attr).functional = functional
 
         return None
 
     def set_opt_basis_set(self, basis_set: Union["BasisSet", str]):
         """Set the basis set for all optimisation and gradient calculations"""
-        for attr in ("low_opt", "opt", "opt_ts", "grad", "hess"):
+        for attr in ("low_opt", "opt", "opt_ts", "grad", "hess", "irc"):
             getattr(self, attr).basis_set = basis_set
 
         return None
@@ -479,6 +493,33 @@ class SinglePointKeywords(Keywords):
         return f"SPKeywords({self.__str__()})"
 
 
+class IRCKeywords(Keywords):
+    @property
+    def max_irc_points(self):
+        """
+        Maximum number of points in the IRC calculations
+
+        Returns:
+            (autode.wrappers.keywords.MaxPoints):
+        """
+        return self._get_keyword(MaxIRCPoints)
+
+    @max_irc_points.setter
+    def max_irc_points(self, value: Union[int, "MaxIRCPoints", None]):
+        """Set the maximum number of points in the IRC calculations"""
+        if value is None:
+            self._set_keyword(None, MaxIRCPoints)
+            return
+
+        if int(value) <= 0:
+            raise ValueError("Must have a positive number of opt cycles")
+
+        self._set_keyword(MaxIRCPoints(int(value)), MaxIRCPoints)
+
+    def __repr__(self):
+        return f"IRCKeywords({self.__str__()})"
+
+
 class Keyword(ABC):
     def __init__(
         self, name: str, doi_list: Optional[List[str]] = None, **kwargs
@@ -674,6 +715,19 @@ class MaxOptCycles(Keyword):
 
     def __repr__(self):
         return f"MaxOptCycles(N = {self.name})"
+
+    def __int__(self):
+        return int(self.name)
+
+    def __init__(self, number: int):
+        super().__init__(name=str(int(number)))
+
+
+class MaxIRCPoints(Keyword):
+    """Maximum number of IRC points"""
+
+    def __repr__(self):
+        return f"MaxIRCPoints(N = {self.name})"
 
     def __int__(self):
         return int(self.name)

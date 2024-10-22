@@ -123,6 +123,7 @@ class Reaction:
         with_complexes: bool = False,
         free_energy: bool = False,
         enthalpy: bool = False,
+        irc: bool = False,
     ) -> None:
         """
         Calculate and plot a reaction profile for this elemtary reaction. Will
@@ -142,6 +143,8 @@ class Reaction:
             free_energy (bool): Calculate the free energy profile (G)
 
             enthalpy (bool): Calculate the enthalpic profile (H)
+
+            irc (bool): Compute the intrinsic reaction profile
         """
         logger.info("Calculating reaction profile")
 
@@ -167,6 +170,8 @@ class Reaction:
                 reaction.calculate_thermochemical_cont()
             if single_point_refinement:
                 reaction.calculate_single_points()
+            if irc:
+                reaction.calculate_irc()
             reaction.print_output()
             return None
 
@@ -713,6 +718,17 @@ class Reaction:
 
         for mol in self._reasonable_components_with_energy():
             mol.single_point(h_method)
+
+        return None
+
+    @checkpoint_rxn_profile_step("irc")
+    @work_in("irc")
+    def calculate_irc(self) -> None:
+        """Compute the IRC"""
+        h_method = get_hmethod()
+
+        if self.ts:
+            self.ts.irc(method=h_method)
 
         return None
 
