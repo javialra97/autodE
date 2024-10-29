@@ -47,6 +47,32 @@ def _add_opt_option(keywords, new_option):
     return None
 
 
+def _add_irc_option(keywords, new_option):
+    for keyword in keywords:
+        if "opt" not in keyword.lower():
+            continue
+
+        irc_options = []
+        if "=(" in keyword:
+            # get the individual options
+            unformated_options = keyword[5:-1].split(",")
+            irc_options = [
+                option.lower().strip() for option in unformated_options
+            ]
+
+        elif "=" in keyword:
+            irc_options = [keyword[4:]]
+
+        if not any(op.lower() == new_option.lower() for op in irc_options):
+            irc_options.append(new_option)
+
+        new_keyword = f'IRC=({", ".join(irc_options)})'
+        keywords.remove(keyword)
+        keywords.append(new_keyword)
+
+    return None
+
+
 def _modify_keywords_for_point_charges(keywords):
     """For a list of Gaussian keywords modify to include z-matrix if not
     already included. Required if point charges are included in the calc"""
@@ -102,6 +128,9 @@ def _get_keywords(calc_input, molecule):
         if isinstance(keyword, kws.MaxOptCycles):
             continue  # Handled after the full set of keywords is set
 
+        if isinstance(keyword, kws.MaxIRCPoints):
+            continue  # Handled after the full set of keywords is set
+
         elif isinstance(keyword, kws.Keyword):
             kwd_str = keyword.g09 if getattr(keyword, "g09") else keyword.g16
 
@@ -146,6 +175,12 @@ def _get_keywords(calc_input, molecule):
 
         if max_cycles is not None:
             _add_opt_option(new_keywords, f"MaxCycles={int(max_cycles)}")
+
+    if isinstance(calc_input.keywords, kws.IRCKeywords):
+        max_irc_points = calc_input.keywords.max_irc_points
+
+        if max_irc_points is not None:
+            _add_irc_option(new_keywords, f"MaxPoints={int(max_irc_points)}")
 
     # By default perform all optimisations without symmetry
     if opt and not any(kw.lower() == "nosymm" for kw in new_keywords):

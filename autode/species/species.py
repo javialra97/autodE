@@ -34,6 +34,7 @@ from autode.wrappers.keywords import (
     HessianKeywords,
     GradientKeywords,
     SinglePointKeywords,
+    IRCKeywords,
 )
 
 if TYPE_CHECKING:
@@ -906,6 +907,24 @@ class Species(AtomCollection):
 
         return calc
 
+    def _default_irc_calculation(
+        self, method=None, keywords=None, n_cores=None
+    ):
+        """Construct a default IRC calculation"""
+
+        method = methods.method_or_default_hmethod(method)
+        keywords = keywords if keywords is not None else method.keywords.irc
+        logger.info(f"Using keywords: {keywords} for IRC with {method}")
+
+        calc = Calculation(
+            name=f"{self.name}_hess",
+            molecule=self,
+            method=method,
+            keywords=IRCKeywords(keywords),
+            n_cores=Config.n_cores if n_cores is None else n_cores,
+        )
+        return calc
+
     def _run_hess_calculation(self, **kwargs):
         """Run a Hessian calculation on this species
 
@@ -1383,6 +1402,49 @@ class Species(AtomCollection):
             n_cores=Config.n_cores if n_cores is None else n_cores,
         )
         sp.run()
+        return None
+
+    @requires_atoms
+    def irc(
+        self,
+        method: Optional["Method"] = None,
+        calc: Optional[Calculation] = None,
+        keywords: Union[Sequence[str], str, None] = None,
+        n_cores: Optional[int] = None,
+    ) -> None:
+        """
+        Optimise the geometry using a method
+
+        -----------------------------------------------------------------------
+        Arguments:
+            method (autode.wrappers.base.ElectronicStructureMethod):
+
+            calc (autode.calculation.Calculation): Different e.g. constrained
+                                                   optimisation calculation
+
+            keywords (list(str) | None): Calculation keywords to use, if None
+                                         then use the default for the method.
+                                         Does not include solvent-specific ones
+
+            n_cores (int | None): Number of cores to use for the calculation,
+                                  if None then will default to
+                                  autode.Config.n_cores
+        Raises:
+            (autode.exceptions.CalculationException):
+        """
+        logger.info(f"Running IRC of {self.name}")
+
+        if calc is None and method is None:
+            raise ValueError(
+                "IRC cannot be performed without "
+                "a specified method or calculation."
+            )
+
+        if calc is None:
+            calc = self._default_irc_calculation(method, keywords, n_cores)
+
+        calc.run()
+
         return None
 
     @work_in("conformers")
